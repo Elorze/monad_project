@@ -4,7 +4,7 @@ import { loadSources, priceMap, toSourceMap } from "./sources/registry.ts";
 import { verifyClaims } from "./verify.ts";
 
 describe("演示问题", () => {
-  test("北岚毛利率问题固定为两笔支持、一笔说反了", async () => {
+  test("北岚毛利率问题只引用查到的事实", async () => {
     expect(isDemoQuestion("北岚科技2026年第二季度毛利率是多少？主要驱动是什么？")).toBe(true);
     const sources = await loadSources();
     const claims = demoClaims();
@@ -23,7 +23,7 @@ describe("演示问题", () => {
     expect(judged.map((item) => [item.claimId, item.verdict, item.action, item.amount])).toEqual([
       ["c-margin", "SUPPORTED", "PAID", "1000"],
       ["c-driver", "SUPPORTED", "PAID", "1000"],
-      ["c-flip", "CONTRADICTED", "FLAGGED", undefined],
+      ["c-subscription", "SUPPORTED", "PAID", "1000"],
     ]);
 
     const baseline = await verifyClaims({

@@ -35,9 +35,53 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 260px 1fr 200px;
-  gap: 24px;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 20px;
   align-items: start;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.toolbar button,
+.toolbar input {
+  width: auto;
+}
+
+.toolbar button.on {
+  outline: 2px solid #1f6b45;
+}
+
+.lede a,
+.disclaimer {
+  color: #9c2f2f;
+}
+
+.passage,
+.eval table {
+  width: 100%;
+  background: #fffdf8;
+  border: 1px solid #e4dccf;
+}
+
+.eval table {
+  border-collapse: collapse;
+}
+
+.eval th,
+.eval td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #e4dccf;
+}
+
+.script {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
 }
 
 label,

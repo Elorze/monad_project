@@ -4,12 +4,15 @@ import { z } from "zod";
 import { demoClaims, demoJudge, isDemoQuestion } from "./demo.ts";
 import { recordedCloseTx, txForRecordedAction } from "./demoReceipts.ts";
 import { evidenceHashOf } from "./evidence.ts";
+import { buildEvalSummary } from "./evalSet.ts";
 import { PROMPT_VERSION } from "./judge.ts";
+import { LEGAL_DISCLAIMER, LEGAL_OPINION, legalClaims, legalJudge, legalPassages, legalPrices, legalSourceMap } from "./legalDemo.ts";
 import { loadSources, priceMap, toSourceMap } from "./sources/registry.ts";
 import { verifyClaims, type VerifyResult } from "./verify.ts";
 
 const AnswerRequest = z.object({
-  question: z.string().min(2).max(500),
+  question: z.string().min(2).max(500).optional(),
+  sample: z.enum(["legal", "report"]).optional(),
   budget: z.string().regex(/^\d+$/u),
 });
 
@@ -88,55 +91,87 @@ export function createApp(): Hono {
     );
   });
 
+  app.get("/eval", async (c) => c.json(await buildEvalSummary()));
+
+  app.get("/samples", async (c) => {
+    const sources = await loadSources();
+    const reportIds = new Set(["report-beilan", "news-caijing", "reprint-aggregator"]);
+    return c.json({
+      legal: {
+        id: "legal",
+        title: "法律意见样例",
+        disclaimer: LEGAL_DISCLAIMER,
+        passages: legalPassages.map((passage) => ({ ...passage, isOriginal: true })),
+        opinion: LEGAL_OPINION,
+      },
+      report: {
+        id: "report",
+        title: "研报样例",
+        disclaimer: "北岚科技和这些材料是虚构的，用来演示出版商审计，不是投资建议。",
+        passages: sources
+          .filter((source) => reportIds.has(source.sourceId))
+          .map((source) => ({
+            sourceId: source.sourceId,
+            title: source.title,
+            body: source.body,
+            isOriginal: source.isOriginal,
+          })),
+        opinion:
+          "北岚科技2026年第二季度毛利率为32.4%，较上年同期下降。主要原因是云基础设施成本上升。订阅收入同比增长18%，但没有抵消成本压力。",
+      },
+    });
+  });
+
   app.post("/answer", async (c) => {
     const parsed = AnswerRequest.safeParse(await c.req.json());
     if (!parsed.success) return c.json({ message: "问题或预算格式不对" }, 400);
-    if (!isDemoQuestion(parsed.data.question)) {
-      return c.json({ message: "自由提问还没接上。先问北岚科技的毛利率。" }, 400);
-    }
+    const sample = parsed.data.sample ?? (isDemoQuestion(parsed.data.question ?? "") ? "report" : undefined);
+    if (!sample) return c.json({ message: "先选择法律意见或研报样例。" }, 400);
 
-    const sources = await loadSources();
-    const claims = demoClaims();
+    const legal = sample === "legal";
+    const sources = legal ? legalSourceMap() : toSourceMap(await loadSources());
+    const claims = legal ? legalClaims() : demoClaims();
     const verified = await verifyClaims({
       claims,
-      sources: toSourceMap(sources),
-      prices: priceMap(sources),
+      sources,
+      prices: legal ? legalPrices() : priceMap(await loadSources()),
       method: "ours",
-      judge: demoJudge,
+      judge: legal ? legalJudge : demoJudge,
     });
     const settled = applyBudget(verified, parsed.data.budget);
-    const answerId = "demo-beilan-q2";
+    const answerId = legal ? "demo-statute" : "demo-beilan-q2";
+    const answer = legal
+      ? LEGAL_OPINION
+      : "北岚科技2026年第二季度毛利率为32.4%，较上年同期下降。主要原因是云基础设施成本上升。订阅收入同比增长18%，但没有抵消成本压力。";
 
     return streamSSE(c, async (stream) => {
-      const answer = event({
-        type: "answer",
-        answerId,
-        answer: "北岚科技2026年第二季度毛利率为32.4%，下降主要因为云基础设施成本上升。有一条说法把下降说成了上升。",
-      });
-      await stream.writeSSE({ data: JSON.stringify(answer) });
+      await stream.writeSSE({ data: JSON.stringify(event({ type: "answer", answerId, answer })) });
       for (const result of settled.results) {
         const claim = claims.find((item) => item.id === result.claimId);
         if (!claim) continue;
-        const claimEvent = event({
-          type: "claim",
-          claimId: result.claimId,
-          text: claim.text,
-          quote: claim.quote,
-          sourceId: claim.sourceId,
-          verdict: result.verdict,
-          action: result.action,
-          amount: result.amount,
-          rationale: result.rationale,
-          txHash: txForRecordedAction(result.claimId, result.action),
-          evidenceHash: evidenceHashOf({
-            promptVersion: PROMPT_VERSION,
-            claimId: result.claimId,
-            text: claim.text,
-            quote: claim.quote,
-            verdict: result.verdict,
-          }),
+        await stream.writeSSE({
+          data: JSON.stringify(
+            event({
+              type: "claim",
+              claimId: result.claimId,
+              text: claim.text,
+              quote: claim.quote,
+              sourceId: claim.sourceId,
+              verdict: result.verdict,
+              action: result.action,
+              amount: result.amount,
+              rationale: result.rationale,
+              txHash: legal ? undefined : txForRecordedAction(result.claimId, result.action),
+              evidenceHash: evidenceHashOf({
+                promptVersion: PROMPT_VERSION,
+                claimId: result.claimId,
+                text: claim.text,
+                quote: claim.quote,
+                verdict: result.verdict,
+              }),
+            }),
+          ),
         });
-        await stream.writeSSE({ data: JSON.stringify(claimEvent) });
       }
       await stream.writeSSE({
         data: JSON.stringify(
@@ -144,7 +179,9 @@ export function createApp(): Hono {
             type: "done",
             spent: settled.spent,
             refund: settled.refund,
-            refundTx: recordedCloseTx(settled.results.map((result) => ({ claimId: result.claimId, action: result.action }))),
+            refundTx: legal
+              ? undefined
+              : recordedCloseTx(settled.results.map((result) => ({ claimId: result.claimId, action: result.action }))),
           }),
         ),
       });

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "ok-margin",
+    "category": "正确支持",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技2026年第二季度毛利率为32.4%。",
+    "quote": "毛利率为32.4%，较上年同期的35.1%下降2.7个百分点",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "ok-drop",
+    "category": "正确支持",
+    "sourceId": "report-beilan",
+    "claim": "毛利率较上年同期的35.1%下降2.7个百分点。",
+    "quote": "较上年同期的35.1%下降2.7个百分点",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "ok-cloud",
+    "category": "正确支持",
+    "sourceId": "report-beilan",
+    "claim": "毛利率下降的主要原因包括云基础设施成本上升。",
+    "quote": "下降主要归因于云基础设施成本上升",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "ok-subscription",
+    "category": "正确支持",
+    "sourceId": "report-beilan",
+    "claim": "订阅收入同比增长18%。",
+    "quote": "订阅收入同比增长18%，但不足以抵消成本端压力",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "ok-cfo",
+    "category": "正确支持",
+    "sourceId": "news-caijing",
+    "claim": "首席财务官表示，毛利率下降来自云成本上升，不是需求塌方。",
+    "quote": "毛利率下降来自云成本上升，不是需求塌方",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "num-margin",
+    "category": "数字篡改",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技2026年第二季度毛利率为23.4%。",
+    "quote": "毛利率为32.4%，较上年同期的35.1%下降2.7个百分点",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "num-points",
+    "category": "数字篡改",
+    "sourceId": "report-beilan",
+    "claim": "毛利率较上年同期下降5.7个百分点。",
+    "quote": "较上年同期的35.1%下降2.7个百分点",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "num-growth",
+    "category": "数字篡改",
+    "sourceId": "report-beilan",
+    "claim": "订阅收入同比增长81%。",
+    "quote": "订阅收入同比增长18%，但不足以抵消成本端压力",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "dir-margin",
+    "category": "方向反转",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技2026年第二季度毛利率上升。",
+    "quote": "较上年同期的35.1%下降2.7个百分点",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "dir-cloud",
+    "category": "方向反转",
+    "sourceId": "report-beilan",
+    "claim": "云基础设施成本下降，所以毛利率发生变化。",
+    "quote": "下降主要归因于云基础设施成本上升",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "dir-demand",
+    "category": "方向反转",
+    "sourceId": "news-caijing",
+    "claim": "毛利率下降是因为需求塌方。",
+    "quote": "不是需求塌方",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "ctx-rebound",
+    "category": "断章取义",
+    "sourceId": "report-beilan",
+    "claim": "公司确认毛利率已经止跌回升。",
+    "quote": "毛利率已经止跌回升",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "ctx-churn",
+    "category": "断章取义",
+    "sourceId": "report-beilan",
+    "claim": "客户正在流失。",
+    "quote": "客户正在流失",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "ctx-scenario",
+    "category": "断章取义",
+    "sourceId": "report-beilan",
+    "claim": "毛利率已经回到35%以上。",
+    "quote": "毛利率有望回到35%以上",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "gap-headcount",
+    "category": "相关但未说",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技员工超过两千人。",
+    "quote": "订阅收入同比增长18%，但不足以抵消成本端压力",
+    "gold": "UNSUPPORTED"
+  },
+  {
+    "id": "gap-europe",
+    "category": "相关但未说",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技主要收入来自欧洲。",
+    "quote": "下降主要归因于云基础设施成本上升",
+    "gold": "UNSUPPORTED"
+  },
+  {
+    "id": "gap-q1",
+    "category": "相关但未说",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技2026年第一季度毛利率为30%。",
+    "quote": "2026年第二季度毛利率为32.4%",
+    "gold": "UNSUPPORTED"
+  },
+  {
+    "id": "fake-99",
+    "category": "伪造引文",
+    "sourceId": "report-beilan",
+    "claim": "北岚科技毛利率飙升至99%。",
+    "quote": "毛利率飙升至99%",
+    "gold": "UNSUPPORTED"
+  },
+  {
+    "id": "fake-bankrupt",
+    "category": "伪造引文",
+    "sourceId": "news-caijing",
+    "claim": "北岚科技已进入破产重整。",
+    "quote": "公司已进入破产重整",
+    "gold": "UNSUPPORTED"
+  },
+  {
+    "id": "reprint-body",
+    "category": "转载站归因",
+    "sourceId": "reprint-aggregator",
+    "claim": "转载正文写明毛利率为32.4%，并较上年同期下降。",
+    "quote": "毛利率为32.4%，较上年同期的35.1%下降2.7个百分点",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "reprint-decline",
+    "category": "转载站归因",
+    "sourceId": "reprint-aggregator",
+    "claim": "转载正文确认毛利率仍以下降为准。",
+    "quote": "正文仍以下降为准",
+    "gold": "SUPPORTED"
+  }
+]

@@ -14,10 +14,10 @@ const DEMO_JUDGEMENTS: Record<string, Judgement> = {
     rationale: "业绩说明把下降主要归因于云基础设施成本上升。",
     supportingQuote: "下降主要归因于云基础设施成本上升",
   },
-  "c-flip": {
-    verdict: "CONTRADICTED",
-    rationale: "新闻写的是毛利率较去年同期下降，claim 说成了上升。",
-    supportingQuote: "毛利率较去年同期下降",
+  "c-subscription": {
+    verdict: "SUPPORTED",
+    rationale: "研报写明订阅收入同比增长18%，但不足以抵消成本端压力。",
+    supportingQuote: "订阅收入同比增长18%，但不足以抵消成本端压力",
   },
 };
 
@@ -40,10 +40,10 @@ export function demoClaims(): DraftClaim[] {
       quote: "下降主要归因于云基础设施成本上升",
     },
     {
-      id: "c-flip",
-      text: "北岚科技2026年第二季度毛利率上升。",
-      sourceId: "news-caijing",
-      quote: "毛利率较去年同期下降",
+      id: "c-subscription",
+      text: "订阅收入同比增长18%，但不足以抵消成本端压力。",
+      sourceId: "report-beilan",
+      quote: "订阅收入同比增长18%，但不足以抵消成本端压力",
     },
   ];
 }

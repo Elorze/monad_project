@@ -35,7 +35,7 @@ describe("回答接口", () => {
     expect(refund).toBe("0");
   });
 
-  test("演示问题流式返回两笔付款和一笔矛盾标记", async () => {
+  test("演示问题返回三条查得到的付款，其中两条有已经终局的交易", async () => {
     const app = createApp();
     const response = await app.request("/answer", {
       method: "POST",
@@ -52,14 +52,13 @@ describe("回答接口", () => {
     expect(claims.map((item) => [item.claimId, item.verdict, item.action])).toEqual([
       ["c-margin", "SUPPORTED", "PAID"],
       ["c-driver", "SUPPORTED", "PAID"],
-      ["c-flip", "CONTRADICTED", "FLAGGED"],
+      ["c-subscription", "SUPPORTED", "PAID"],
     ]);
-    expect(claims[2]).not.toHaveProperty("amount");
-    expect(String(claims[0]?.evidenceHash)).toMatch(/^0x[0-9a-f]{64}$/u);
     expect(String(claims[0]?.txHash)).toMatch(/^0x[0-9a-f]{64}$/u);
-    expect(String(claims[2]?.txHash)).toMatch(/^0x[0-9a-f]{64}$/u);
-    expect(events.at(-1)).toMatchObject({ type: "done", spent: "2000", refund: "3000" });
-    expect(String(events.at(-1)?.refundTx)).toMatch(/^0x[0-9a-f]{64}$/u);
+    expect(String(claims[1]?.txHash)).toMatch(/^0x[0-9a-f]{64}$/u);
+    expect(claims[2]?.txHash).toBeUndefined();
+    expect(events.at(-1)).toMatchObject({ type: "done", spent: "3000", refund: "2000" });
+    expect(events.at(-1)?.refundTx).toBeUndefined();
   });
 
   test("预算不够时不把已经付过的第二笔交易安到这次头上", async () => {
@@ -87,5 +86,41 @@ describe("回答接口", () => {
       body: JSON.stringify({ question: "今天上海天气怎么样", budget: "5000" }),
     });
     expect(response.status).toBe(400);
+  });
+
+  test("法律样例里说反的那条引文是原文，但不付款，也不冒充链上交易", async () => {
+    const app = createApp();
+    const response = await app.request("/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sample: "legal", budget: "5000" }),
+    });
+    expect(response.status).toBe(200);
+    const events = parseSse(await response.text());
+    const guardian = events.find((item) => item.claimId === "l-guardian");
+    const contract = events.find((item) => item.claimId === "l-contract");
+    expect(guardian).toMatchObject({ verdict: "CONTRADICTED", action: "FLAGGED" });
+    expect(guardian?.txHash).toBeUndefined();
+    expect(guardian?.amount).toBeUndefined();
+    expect(String(guardian?.quote)).toContain("不视为");
+    expect(contract).toMatchObject({ verdict: "SUPPORTED", action: "PAID" });
+    expect(contract?.txHash).toBeUndefined();
+    expect(events.at(-1)).toMatchObject({ spent: "1000" });
+  });
+
+  test("评测表用实跑的误付率，不预填模型那一列", async () => {
+    const app = createApp();
+    const response = await app.request("/eval");
+    const body = (await response.json()) as {
+      caseCount: number;
+      chain: boolean;
+      omitted: string;
+      methods: Array<{ name: string; mispayment: number; wrong: number }>;
+    };
+    expect(body.caseCount).toBe(21);
+    expect(body.chain).toBe(false);
+    expect(body.omitted).toContain("不填");
+    expect(body.methods[0]?.mispayment).toBeGreaterThan(body.methods[1]?.mispayment ?? 1);
+    expect(body.methods[0]?.wrong).toBe(12);
   });
 });
