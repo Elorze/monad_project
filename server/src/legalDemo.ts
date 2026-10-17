@@ -1,53 +1,73 @@
 import { contentHashOf, type DraftClaim, type SourceRecord } from "./hardChecks.ts";
 import type { Judge, Judgement } from "./verify.ts";
 
-export const LEGAL_DISCLAIMER = "以下法条为教学虚构，不是法律意见，也不能拿去适用。CiteAudit 不是法律产品。";
+export const LEGAL_DISCLAIMER =
+  "法条摘自《中华人民共和国民法典》公开文本第1032条至第1035条。中间这段意见是事先写好的演示错例，不是某家模型的实测输出，也不是法律意见。";
 
-const ARTICLE_12 =
-  "跨境传输个人数据，应当取得本人的单独同意。但是，为履行与个人签订的合同所必需的，不需要单独同意。";
-const ARTICLE_13 = "单独同意必须由本人作出。监护人代为同意不视为本人的单独同意。";
-
-export const legalPassages = [
-  { sourceId: "statute-12", title: "《演示条例》第12条", body: ARTICLE_12 },
-  { sourceId: "statute-13", title: "《演示条例》第13条", body: ARTICLE_13 },
-];
+const FILES = [
+  { sourceId: "cc-1032", title: "民法典第1032条", file: "cc-1032.md" },
+  { sourceId: "cc-1033", title: "民法典第1033条", file: "cc-1033.md" },
+  { sourceId: "cc-1034", title: "民法典第1034条", file: "cc-1034.md" },
+  { sourceId: "cc-1035", title: "民法典第1035条", file: "cc-1035.md" },
+] as const;
 
 export const LEGAL_OPINION =
-  "为履行与个人签订的合同所必需时，跨境传输个人数据不需要单独同意。另外，监护人代为同意视为本人的单独同意。";
+  "自然人享有隐私权。处理他人的私密信息，只要法律没有另行规定，就不需要权利人同意。处理个人信息，应当征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外。";
 
 const JUDGEMENTS: Record<string, Judgement> = {
-  "l-contract": {
+  "l-privacy": {
     verdict: "SUPPORTED",
-    rationale: "第12条但书写明，为履行与个人签订的合同所必需的，不需要单独同意。",
-    supportingQuote: "为履行与个人签订的合同所必需的，不需要单独同意",
+    rationale: "第1032条写明自然人享有隐私权。",
+    supportingQuote: "自然人享有隐私权",
   },
-  "l-guardian": {
+  "l-secret": {
     verdict: "CONTRADICTED",
-    rationale: "引文是第13条原句，但原句写的是不视为本人的单独同意，意见把“不”去掉了。",
-    supportingQuote: "监护人代为同意不视为本人的单独同意",
+    rationale: "引文是第1033条原句。原句要求法律另有规定或者权利人明确同意，意见漏掉了权利人同意。",
+    supportingQuote: "除法律另有规定或者权利人明确同意外",
+  },
+  "l-consent": {
+    verdict: "SUPPORTED",
+    rationale: "第1035条要求征得该自然人或者其监护人同意，法律、行政法规另有规定的除外。",
+    supportingQuote: "征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外",
   },
 };
+
+export async function loadLegalPassages(): Promise<Array<{ sourceId: string; title: string; body: string }>> {
+  const passages = [];
+  for (const item of FILES) {
+    const body = (await Bun.file(new URL(`./sources/${item.file}`, import.meta.url)).text()).replace(/\r\n/g, "\n").trim();
+    passages.push({ sourceId: item.sourceId, title: item.title, body });
+  }
+  return passages;
+}
 
 export function legalClaims(): DraftClaim[] {
   return [
     {
-      id: "l-contract",
-      text: "为履行与个人签订的合同所必需时，跨境传输个人数据不需要单独同意。",
-      sourceId: "statute-12",
-      quote: "为履行与个人签订的合同所必需的，不需要单独同意",
+      id: "l-privacy",
+      text: "自然人享有隐私权。",
+      sourceId: "cc-1032",
+      quote: "自然人享有隐私权",
     },
     {
-      id: "l-guardian",
-      text: "监护人代为同意视为本人的单独同意。",
-      sourceId: "statute-13",
-      quote: "监护人代为同意不视为本人的单独同意",
+      id: "l-secret",
+      text: "处理他人的私密信息，只要法律没有另行规定，就不需要权利人同意。",
+      sourceId: "cc-1033",
+      quote: "除法律另有规定或者权利人明确同意外",
+    },
+    {
+      id: "l-consent",
+      text: "处理个人信息，应当征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外。",
+      sourceId: "cc-1035",
+      quote: "征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外",
     },
   ];
 }
 
-export function legalSourceMap(): Map<string, SourceRecord> {
+export async function legalSourceMap(): Promise<Map<string, SourceRecord>> {
+  const passages = await loadLegalPassages();
   return new Map(
-    legalPassages.map((passage) => [
+    passages.map((passage) => [
       passage.sourceId,
       {
         sourceId: passage.sourceId,
@@ -60,7 +80,7 @@ export function legalSourceMap(): Map<string, SourceRecord> {
 }
 
 export function legalPrices(): Map<string, string> {
-  return new Map(legalPassages.map((passage) => [passage.sourceId, "1000"]));
+  return new Map(FILES.map((item) => [item.sourceId, "1000"]));
 }
 
 export const legalJudge: Judge = async ({ claim }) => {

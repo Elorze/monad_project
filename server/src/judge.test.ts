@@ -20,10 +20,12 @@ describe("判定解析", () => {
     const parsed = parseJudgement(
       '```json\n{"verdict":"CONTRADICTED","rationale":"原文是下降","supportingQuote":"毛利率下降","amount":"999999"}\n```',
     );
-    expect(parsed).toEqual({
+    expect(parsed.verdict).toBe("CONTRADICTED");
+    expect(parsed.supportingQuote).toBe("毛利率下降");
+    expect("amount" in parsed).toBe(false);
+    expect(parseJudgement('{"verdict":"CONTRADICTED"}')).toEqual({
       verdict: "CONTRADICTED",
-      rationale: "原文是下降",
-      supportingQuote: "毛利率下降",
+      rationale: "",
     });
   });
 

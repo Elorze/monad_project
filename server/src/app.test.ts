@@ -97,15 +97,15 @@ describe("回答接口", () => {
     });
     expect(response.status).toBe(200);
     const events = parseSse(await response.text());
-    const guardian = events.find((item) => item.claimId === "l-guardian");
-    const contract = events.find((item) => item.claimId === "l-contract");
+    const guardian = events.find((item) => item.claimId === "l-secret");
+    const contract = events.find((item) => item.claimId === "l-consent");
     expect(guardian).toMatchObject({ verdict: "CONTRADICTED", action: "FLAGGED" });
     expect(guardian?.txHash).toBeUndefined();
     expect(guardian?.amount).toBeUndefined();
-    expect(String(guardian?.quote)).toContain("不视为");
+    expect(String(guardian?.quote)).toContain("权利人明确同意");
     expect(contract).toMatchObject({ verdict: "SUPPORTED", action: "PAID" });
     expect(contract?.txHash).toBeUndefined();
-    expect(events.at(-1)).toMatchObject({ spent: "1000" });
+    expect(events.at(-1)).toMatchObject({ spent: "2000" });
   });
 
   test("评测表用实跑的误付率，不预填模型那一列", async () => {
@@ -117,10 +117,12 @@ describe("回答接口", () => {
       omitted: string;
       methods: Array<{ name: string; mispayment: number; wrong: number }>;
     };
-    expect(body.caseCount).toBe(21);
+    expect(body.caseCount).toBe(30);
     expect(body.chain).toBe(false);
-    expect(body.omitted).toContain("不填");
-    expect(body.methods[0]?.mispayment).toBeGreaterThan(body.methods[1]?.mispayment ?? 1);
-    expect(body.methods[0]?.wrong).toBe(12);
+    const baseline = body.methods.find((method) => method.name === "仅子串");
+    const rules = body.methods.find((method) => method.name === "数字与方向规则");
+    expect(baseline?.wrong).toBe(18);
+    expect(baseline?.mispayment).toBeGreaterThan(rules?.mispayment ?? 1);
+    if (body.methods.length === 2) expect(body.omitted).toContain("不填");
   });
 });

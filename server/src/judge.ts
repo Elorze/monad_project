@@ -5,7 +5,7 @@ import type { Judge, VerifyMethod } from "./verify.ts";
 
 const JudgementSchema = z.object({
   verdict: z.enum(["SUPPORTED", "CONTRADICTED", "UNSUPPORTED"]),
-  rationale: z.string().max(400),
+  rationale: z.string().max(400).optional().default(""),
   supportingQuote: z.string().max(500).optional(),
 });
 

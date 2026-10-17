@@ -166,5 +166,77 @@
     "claim": "转载正文确认毛利率仍以下降为准。",
     "quote": "正文仍以下降为准",
     "gold": "SUPPORTED"
+  },
+  {
+    "id": "cc-privacy",
+    "category": "正确支持",
+    "sourceId": "cc-1032",
+    "claim": "自然人享有隐私权。",
+    "quote": "自然人享有隐私权",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "cc-phone",
+    "category": "正确支持",
+    "sourceId": "cc-1034",
+    "claim": "电话号码属于个人信息。",
+    "quote": "电话号码、电子邮箱、健康信息、行踪信息",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "cc-consent",
+    "category": "正确支持",
+    "sourceId": "cc-1035",
+    "claim": "处理个人信息应当征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外。",
+    "quote": "征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外",
+    "gold": "SUPPORTED"
+  },
+  {
+    "id": "cc-no-consent",
+    "category": "断章取义",
+    "sourceId": "cc-1033",
+    "claim": "只要法律没有另行规定，处理他人的私密信息就不需要权利人同意。",
+    "quote": "除法律另有规定或者权利人明确同意外",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "cc-peace",
+    "category": "断章取义",
+    "sourceId": "cc-1032",
+    "claim": "隐私只包括私密信息，不包括私人生活安宁。",
+    "quote": "私人生活安宁和不愿为他人知晓的私密空间、私密活动、私密信息",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "cc-calls",
+    "category": "断章取义",
+    "sourceId": "cc-1033",
+    "claim": "侵害隐私权只包括打电话和发短信。",
+    "quote": "以电话、短信、即时通讯工具、电子邮件、传单等方式侵扰他人的私人生活安宁",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "cc-rules",
+    "category": "断章取义",
+    "sourceId": "cc-1035",
+    "claim": "处理个人信息不必公开处理规则。",
+    "quote": "公开处理信息的规则",
+    "gold": "CONTRADICTED"
+  },
+  {
+    "id": "cc-damages",
+    "category": "相关但未说",
+    "sourceId": "cc-1032",
+    "claim": "侵害隐私权应当赔偿五万元。",
+    "quote": "自然人享有隐私权",
+    "gold": "UNSUPPORTED"
+  },
+  {
+    "id": "cc-inherit",
+    "category": "相关但未说",
+    "sourceId": "cc-1032",
+    "claim": "隐私权可以继承。",
+    "quote": "自然人享有隐私权",
+    "gold": "UNSUPPORTED"
   }
 ]

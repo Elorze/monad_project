@@ -45,6 +45,42 @@ const META = [
     pricePerClaim: "1000",
     file: "logistics.md",
   },
+  {
+    sourceId: "cc-1032",
+    title: "民法典第1032条",
+    publisher: "民法典",
+    isOriginal: true,
+    payee: "0x5555555555555555555555555555555555555555",
+    pricePerClaim: "1000",
+    file: "cc-1032.md",
+  },
+  {
+    sourceId: "cc-1033",
+    title: "民法典第1033条",
+    publisher: "民法典",
+    isOriginal: true,
+    payee: "0x5555555555555555555555555555555555555555",
+    pricePerClaim: "1000",
+    file: "cc-1033.md",
+  },
+  {
+    sourceId: "cc-1034",
+    title: "民法典第1034条",
+    publisher: "民法典",
+    isOriginal: true,
+    payee: "0x5555555555555555555555555555555555555555",
+    pricePerClaim: "1000",
+    file: "cc-1034.md",
+  },
+  {
+    sourceId: "cc-1035",
+    title: "民法典第1035条",
+    publisher: "民法典",
+    isOriginal: true,
+    payee: "0x5555555555555555555555555555555555555555",
+    pricePerClaim: "1000",
+    file: "cc-1035.md",
+  },
 ] as const;
 
 export async function loadSources(): Promise<RegisteredSource[]> {

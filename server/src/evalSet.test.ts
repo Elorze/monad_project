@@ -9,11 +9,11 @@ describe("标注集", () => {
     for (const item of cases) counts.set(item.category, (counts.get(item.category) ?? 0) + 1);
     expect(counts).toEqual(
       new Map([
-        ["正确支持", 5],
+        ["正确支持", 8],
         ["数字篡改", 3],
         ["方向反转", 3],
-        ["断章取义", 3],
-        ["相关但未说", 3],
+        ["断章取义", 7],
+        ["相关但未说", 5],
         ["伪造引文", 2],
         ["转载站归因", 2],
       ]),

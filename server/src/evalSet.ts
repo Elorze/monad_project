@@ -60,13 +60,40 @@ export async function buildEvalSummary() {
       stillWrong: rows.filter((row) => row.predicted === "SUPPORTED" && row.gold !== "SUPPORTED").map((row) => row.category),
     };
   };
+  const local = [
+    { id: "baselineA", name: "仅子串", ...score((_item, present) => baselineA(present)) },
+    { id: "rules", name: "数字与方向规则", ...score((item, present) => rulesThenSubstring(item, present)) },
+  ];
+  const saved = readSavedLlm();
   return {
     caseCount: cases.length,
     chain: false,
-    methods: [
-      { id: "baselineA", name: "仅子串", ...score((_item, present) => baselineA(present)) },
-      { id: "rules", name: "数字与方向规则", ...score((item, present) => rulesThenSubstring(item, present)) },
-    ],
-    omitted: "优化模型还没有在这 21 条上整集跑完，所以表里不填那一列。",
+    methods: saved ? [...local, ...saved.methods] : local,
+    omitted: saved
+      ? saved.note
+      : `最小提示和优化核对还没有在这 ${cases.length} 条上整集跑完，所以表里不填那两列。`,
   };
+}
+
+const SavedSchema = z.object({
+  note: z.string(),
+  methods: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      mispayment: z.number(),
+      paid: z.number(),
+      wrong: z.number(),
+      stillWrong: z.array(z.string()),
+    }),
+  ),
+});
+
+function readSavedLlm(): z.infer<typeof SavedSchema> | null {
+  try {
+    const raw = readFileSync(new URL("../../eval/results.json", import.meta.url), "utf8");
+    return SavedSchema.parse(JSON.parse(raw));
+  } catch {
+    return null;
+  }
 }

@@ -122,7 +122,7 @@ export function App() {
       </section>
       <section className="eval">
         <h2>评测表</h2>
-        <p className="note">21 条标注在链下跑。数字来自这次计算，没有预填。模型整集还没跑，所以没有第三列。</p>
+        <p className="note">{evalSummary ? `${evalSummary.caseCount} 条标注在链下跑。数字来自这次计算，没有预填。` : "评测表加载中。"}</p>
         <table>
           <thead>
             <tr>

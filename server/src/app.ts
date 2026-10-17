@@ -6,7 +6,7 @@ import { recordedCloseTx, txForRecordedAction } from "./demoReceipts.ts";
 import { evidenceHashOf } from "./evidence.ts";
 import { buildEvalSummary } from "./evalSet.ts";
 import { PROMPT_VERSION } from "./judge.ts";
-import { LEGAL_DISCLAIMER, LEGAL_OPINION, legalClaims, legalJudge, legalPassages, legalPrices, legalSourceMap } from "./legalDemo.ts";
+import { LEGAL_DISCLAIMER, LEGAL_OPINION, legalClaims, legalJudge, legalPrices, legalSourceMap, loadLegalPassages } from "./legalDemo.ts";
 import { loadSources, priceMap, toSourceMap } from "./sources/registry.ts";
 import { verifyClaims, type VerifyResult } from "./verify.ts";
 
@@ -101,7 +101,7 @@ export function createApp(): Hono {
         id: "legal",
         title: "法律意见样例",
         disclaimer: LEGAL_DISCLAIMER,
-        passages: legalPassages.map((passage) => ({ ...passage, isOriginal: true })),
+        passages: (await loadLegalPassages()).map((passage) => ({ ...passage, isOriginal: true })),
         opinion: LEGAL_OPINION,
       },
       report: {
@@ -129,7 +129,7 @@ export function createApp(): Hono {
     if (!sample) return c.json({ message: "先选择法律意见或研报样例。" }, 400);
 
     const legal = sample === "legal";
-    const sources = legal ? legalSourceMap() : toSourceMap(await loadSources());
+    const sources = legal ? await legalSourceMap() : toSourceMap(await loadSources());
     const claims = legal ? legalClaims() : demoClaims();
     const verified = await verifyClaims({
       claims,
