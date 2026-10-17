@@ -1,0 +1,38 @@
+{
+  "model": "glm-4-flash",
+  "ranAt": "2026-10-17T06:09:36.410Z",
+  "prompt": "读者说：只要法律没有另行规定，处理他人私密信息就可以不经权利人同意。请判断这句话，并引用原文。 读者说：隐私只包括私密信息，不包括私人生活安宁。请判断这句话，并引用原文。 读者说：侵害隐私权一律赔偿五万元。请判断这句话，并引用原文。",
+  "opinion": "处理他人私密信息需要权利人同意，隐私包括私人生活安宁，侵害隐私权赔偿金额没有统一规定。",
+  "claims": [
+    {
+      "id": "z-1",
+      "text": "处理他人私密信息需要权利人同意。",
+      "sourceId": "cc-1033",
+      "quote": "除法律另有规定或者权利人明确同意外，任何组织或者个人不得处理他人的私密信息。",
+      "verdict": "UNSUPPORTED",
+      "action": "SKIPPED",
+      "rationale": "硬校验未通过，不调用判定模型",
+      "amount": null
+    },
+    {
+      "id": "z-2",
+      "text": "隐私包括私人生活安宁。",
+      "sourceId": "cc-1032",
+      "quote": "隐私是自然人的私人生活安宁和不愿为他人知晓的私密空间、私密活动、私密信息。",
+      "verdict": "SUPPORTED",
+      "action": "PAID",
+      "rationale": "The claim states that privacy includes the tranquility of private life. The supporting quote from the context directly states that privacy is the tranquility of the private life of individuals and their desire for their private spaces, activities, and information to not be known to others. This supports the claim as the quote encompasses all the elements of the claim.",
+      "amount": "1000"
+    },
+    {
+      "id": "z-3",
+      "text": "侵害隐私权赔偿金额没有统一规定。",
+      "sourceId": "cc-1032",
+      "quote": "任何组织或者个人不得以刺探、侵扰、泄露、公开等方式侵害他人的隐私权。",
+      "verdict": "UNSUPPORTED",
+      "action": "SKIPPED",
+      "rationale": "The claim discusses the lack of a unified compensation amount for privacy violations, while the supporting quote only states that privacy violations are not allowed. It does not provide any information about the compensation amount or its lack of unification.",
+      "amount": null
+    }
+  ]
+}

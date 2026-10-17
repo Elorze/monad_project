@@ -86,7 +86,7 @@ export function App() {
           </button>
         </div>
         <p className="script">
-          台词：先说斯坦福的六分之一；再看法律样例里那句引文是原文、意思却说反了，只看子串会付钱，这里不付；最后亮下面的评测表。
+          台词：先说斯坦福的六分之一；再看智谱刚写的隐私意见，赔偿那句原文里没有，所以不付；最后亮下面的评测表，误付率从 64% 到 9%。
         </p>
       </header>
       {sample?.disclaimer ? <p className="disclaimer">{sample.disclaimer}</p> : null}

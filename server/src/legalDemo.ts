@@ -1,8 +1,7 @@
+import { readFileSync } from "node:fs";
+import { z } from "zod";
 import { contentHashOf, type DraftClaim, type SourceRecord } from "./hardChecks.ts";
 import type { Judge, Judgement } from "./verify.ts";
-
-export const LEGAL_DISCLAIMER =
-  "法条摘自《中华人民共和国民法典》公开文本第1032条至第1035条。中间这段意见是事先写好的演示错例，不是某家模型的实测输出，也不是法律意见。";
 
 const FILES = [
   { sourceId: "cc-1032", title: "民法典第1032条", file: "cc-1032.md" },
@@ -11,26 +10,43 @@ const FILES = [
   { sourceId: "cc-1035", title: "民法典第1035条", file: "cc-1035.md" },
 ] as const;
 
-export const LEGAL_OPINION =
-  "自然人享有隐私权。处理他人的私密信息，只要法律没有另行规定，就不需要权利人同意。处理个人信息，应当征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外。";
+const CapturedSchema = z.object({
+  model: z.string(),
+  ranAt: z.string(),
+  opinion: z.string(),
+  claims: z.array(
+    z.object({
+      id: z.string(),
+      text: z.string(),
+      sourceId: z.string(),
+      quote: z.string(),
+      verdict: z.enum(["SUPPORTED", "CONTRADICTED", "UNSUPPORTED"]),
+      rationale: z.string(),
+    }),
+  ),
+});
 
-const JUDGEMENTS: Record<string, Judgement> = {
-  "l-privacy": {
-    verdict: "SUPPORTED",
-    rationale: "第1032条写明自然人享有隐私权。",
-    supportingQuote: "自然人享有隐私权",
-  },
-  "l-secret": {
-    verdict: "CONTRADICTED",
-    rationale: "引文是第1033条原句。原句要求法律另有规定或者权利人明确同意，意见漏掉了权利人同意。",
-    supportingQuote: "除法律另有规定或者权利人明确同意外",
-  },
-  "l-consent": {
-    verdict: "SUPPORTED",
-    rationale: "第1035条要求征得该自然人或者其监护人同意，法律、行政法规另有规定的除外。",
-    supportingQuote: "征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外",
-  },
-};
+const captured = CapturedSchema.parse(JSON.parse(readFileSync(new URL("../../eval/captured-legal.json", import.meta.url), "utf8")));
+
+function beijing(iso: string): string {
+  const shifted = new Date(new Date(iso).getTime() + 8 * 60 * 60 * 1000);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())} ${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}（北京时间）`;
+}
+
+export const LEGAL_OPINION = captured.opinion;
+export const LEGAL_DISCLAIMER = `这段意见由 ${captured.model} 在 ${beijing(captured.ranAt)} 根据民法典第1032条至第1035条生成，并用同一模型核对后存档。不是事先写好的错例，也不是法律意见。`;
+
+const JUDGEMENTS: Record<string, Judgement> = Object.fromEntries(
+  captured.claims.map((claim) => [
+    claim.id,
+    {
+      verdict: claim.verdict,
+      rationale: claim.rationale,
+      supportingQuote: claim.verdict === "SUPPORTED" ? claim.quote : undefined,
+    },
+  ]),
+);
 
 export async function loadLegalPassages(): Promise<Array<{ sourceId: string; title: string; body: string }>> {
   const passages = [];
@@ -42,26 +58,12 @@ export async function loadLegalPassages(): Promise<Array<{ sourceId: string; tit
 }
 
 export function legalClaims(): DraftClaim[] {
-  return [
-    {
-      id: "l-privacy",
-      text: "自然人享有隐私权。",
-      sourceId: "cc-1032",
-      quote: "自然人享有隐私权",
-    },
-    {
-      id: "l-secret",
-      text: "处理他人的私密信息，只要法律没有另行规定，就不需要权利人同意。",
-      sourceId: "cc-1033",
-      quote: "除法律另有规定或者权利人明确同意外",
-    },
-    {
-      id: "l-consent",
-      text: "处理个人信息，应当征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外。",
-      sourceId: "cc-1035",
-      quote: "征得该自然人或者其监护人同意，但是法律、行政法规另有规定的除外",
-    },
-  ];
+  return captured.claims.map((claim) => ({
+    id: claim.id,
+    text: claim.text,
+    sourceId: claim.sourceId,
+    quote: claim.quote,
+  }));
 }
 
 export async function legalSourceMap(): Promise<Map<string, SourceRecord>> {

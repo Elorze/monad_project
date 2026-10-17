@@ -7,3 +7,6 @@ cache/
 broadcast/
 *.log
 .DS_Store
+demo/audio/
+demo/*.webm
+eval/capture-raw.txt

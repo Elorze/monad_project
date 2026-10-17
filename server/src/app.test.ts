@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { applyBudget, createApp } from "./app.ts";
+import { loadLegalPassages } from "./legalDemo.ts";
 import type { VerifyResult } from "./verify.ts";
 
 function parseSse(text: string): Array<Record<string, unknown>> {
@@ -97,15 +98,21 @@ describe("回答接口", () => {
     });
     expect(response.status).toBe(200);
     const events = parseSse(await response.text());
-    const guardian = events.find((item) => item.claimId === "l-secret");
-    const contract = events.find((item) => item.claimId === "l-consent");
-    expect(guardian).toMatchObject({ verdict: "CONTRADICTED", action: "FLAGGED" });
-    expect(guardian?.txHash).toBeUndefined();
-    expect(guardian?.amount).toBeUndefined();
-    expect(String(guardian?.quote)).toContain("权利人明确同意");
-    expect(contract).toMatchObject({ verdict: "SUPPORTED", action: "PAID" });
-    expect(contract?.txHash).toBeUndefined();
-    expect(events.at(-1)).toMatchObject({ spent: "2000" });
+    const spliced = events.find((item) => item.claimId === "z-1");
+    const peace = events.find((item) => item.claimId === "z-2");
+    const damages = events.find((item) => item.claimId === "z-3");
+    expect(spliced).toMatchObject({ verdict: "UNSUPPORTED", action: "SKIPPED" });
+    expect(spliced?.txHash).toBeUndefined();
+    expect(spliced?.amount).toBeUndefined();
+    expect(String(spliced?.quote)).toContain("不得处理他人的私密信息");
+    const passages = await loadLegalPassages();
+    expect(passages.find((item) => item.sourceId === "cc-1033")?.body.includes(String(spliced?.quote))).toBe(false);
+    expect(passages.find((item) => item.sourceId === "cc-1032")?.body.includes(String(damages?.quote))).toBe(true);
+    expect(damages).toMatchObject({ verdict: "UNSUPPORTED", action: "SKIPPED" });
+    expect(damages?.amount).toBeUndefined();
+    expect(peace).toMatchObject({ verdict: "SUPPORTED", action: "PAID" });
+    expect(peace?.txHash).toBeUndefined();
+    expect(events.at(-1)).toMatchObject({ spent: "1000" });
   });
 
   test("评测表用实跑的误付率，不预填模型那一列", async () => {
