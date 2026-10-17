@@ -2,9 +2,8 @@ import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { contentHashOf, type DraftClaim, type SourceRecord } from "./hardChecks.ts";
 import { evidenceHashOf } from "./evidence.ts";
 import { createModelJudge, PROMPT_VERSION } from "./judge.ts";
-import { txForRecordedAction, recordedCloseTx } from "./demoReceipts.ts";
-import { surfaceConflict } from "./surface.ts";
 import { applyBudget } from "./budget.ts";
+import { settleIfConfigured } from "./chain/liveSettle.ts";
 import { verifyClaims, type Judge, type VerifyMethod } from "./verify.ts";
 
 export type VerifySourceInput = {
@@ -106,9 +105,26 @@ export async function runVerifyAndSettle(input: VerifyAndSettleInput): Promise<V
       amount: result.amount,
       rationale: result.rationale,
       evidenceHash,
-      txHash: txForRecordedAction(result.claimId, result.action),
     };
   });
+
+  const paid = claimRows.filter((row) => row.action === "PAID" && row.evidenceHash.startsWith("0x"));
+  const receipts = await settleIfConfigured({
+    answerId,
+    budget: BigInt(budget),
+    claims: paid.map((row) => ({
+      claimId: row.claimId,
+      sourceId: row.sourceId,
+      body: sources.get(row.sourceId)?.body ?? "",
+      evidenceHash: row.evidenceHash as `0x${string}`,
+    })),
+  });
+  if (receipts) {
+    for (const row of claimRows) {
+      const hash = receipts.txByClaim[row.claimId];
+      if (hash) row.txHash = hash;
+    }
+  }
 
   const output: VerifyAndSettleResult = {
     answerId,
@@ -120,7 +136,7 @@ export async function runVerifyAndSettle(input: VerifyAndSettleInput): Promise<V
     })),
     spent: settled.spent,
     refund: settled.refund,
-    refundTx: recordedCloseTx(settled.results.map((result) => ({ claimId: result.claimId, action: result.action }))),
+    refundTx: receipts?.closeTx,
     claims: claimRows,
     savedAt: new Date().toISOString(),
     via: "mcp",
@@ -145,22 +161,9 @@ export function readLastVerify(): VerifyAndSettleResult | null {
 async function pickJudge(method: VerifyMethod): Promise<Judge | undefined> {
   if (method === "baselineA") return undefined;
   const apiKey = process.env.LLM_API_KEY;
-  if (apiKey) {
-    return createModelJudge({
-      apiKey,
-      model: process.env.LLM_MODEL ?? "glm-4-flash",
-    });
-  }
-  return offlineJudge;
+  if (!apiKey) throw new Error("未配置 LLM_API_KEY，不能把「引文在原文里」当成支持");
+  return createModelJudge({
+    apiKey,
+    model: process.env.LLM_MODEL ?? "glm-4-flash",
+  });
 }
-
-const offlineJudge: Judge = async ({ claim, source }) => {
-  const conflict = surfaceConflict(claim.text, claim.quote);
-  if (conflict) {
-    return { verdict: "CONTRADICTED", rationale: "数字或方向与引文冲突", supportingQuote: claim.quote };
-  }
-  if (!source.body.includes(claim.quote.trim()) && !claim.quote) {
-    return { verdict: "UNSUPPORTED", rationale: "引文不在原文" };
-  }
-  return { verdict: "SUPPORTED", rationale: "离线规则：引文在原文且未见表面冲突", supportingQuote: claim.quote };
-};

@@ -2,7 +2,7 @@
   "mcpServers": {
     "citeaudit": {
       "command": "D:\\devtools\\bun\\bin\\bun.exe",
-      "args": ["mcp/server.ts"],
+      "args": ["F:/programming/cursor/littlethings/monad_hackthon/mcp/server.ts"],
       "env": {
         "CITE_AUDIT_URL": "http://127.0.0.1:8787",
         "NO_PROXY": "127.0.0.1,localhost",

@@ -103,6 +103,10 @@ export async function loadSources(): Promise<RegisteredSource[]> {
   return loaded;
 }
 
+export function payeeOf(sourceId: string): `0x${string}` | undefined {
+  return META.find((item) => item.sourceId === sourceId)?.payee;
+}
+
 export function toSourceMap(sources: RegisteredSource[]): Map<string, SourceRecord> {
   return new Map(sources.map((source) => [source.sourceId, source]));
 }

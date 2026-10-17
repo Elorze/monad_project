@@ -65,8 +65,8 @@ export function explorerTx(hash: string): string {
 
 export function verdictLabel(verdict: string): string {
   if (verdict === "SUPPORTED") return "支持，付款";
-  if (verdict === "CONTRADICTED") return "矛盾，拒付";
-  return "未支持";
+  if (verdict === "CONTRADICTED") return "拒付 · 矛盾";
+  return "拒付 · 未支持";
 }
 
 export function usdc(amount: string | undefined): string {

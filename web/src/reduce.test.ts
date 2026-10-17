@@ -31,7 +31,8 @@ describe("页面状态", () => {
     expect(state.claims).toHaveLength(1);
     expect(state.spent).toBe("1000");
     expect(state.refundTx).toMatch(/^0xef/);
-    expect(verdictLabel("CONTRADICTED")).toBe("矛盾，拒付");
+    expect(verdictLabel("CONTRADICTED")).toBe("拒付 · 矛盾");
+    expect(verdictLabel("UNSUPPORTED")).toBe("拒付 · 未支持");
     expect(usdc("1000")).toBe("0.001");
     expect(explorerTx(state.claims[0]?.txHash ?? "")).toContain("testnet.monadexplorer.com/tx/0xcd");
   });

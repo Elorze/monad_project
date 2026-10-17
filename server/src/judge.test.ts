@@ -27,6 +27,8 @@ describe("判定解析", () => {
       verdict: "CONTRADICTED",
       rationale: "",
     });
+    const long = "理".repeat(500);
+    expect(parseJudgement(`{"verdict":"SUPPORTED","rationale":"${long}","supportingQuote":"${"引".repeat(600)}"}`).rationale).toHaveLength(400);
   });
 
   test("假接口返回矛盾判定", async () => {
@@ -72,5 +74,50 @@ describe("判定解析", () => {
       method: "ours",
     });
     expect(result.verdict).toBe("CONTRADICTED");
+  });
+
+  test("连接中断时重试，第二次成功就采用", async () => {
+    let calls = 0;
+    const judge = createModelJudge({
+      apiKey: "test-key",
+      model: "glm-4-flash",
+      fetchImpl: async () => {
+        calls += 1;
+        if (calls === 1) throw new Error("socket closed");
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    verdict: "SUPPORTED",
+                    rationale: "原文写了私人生活安宁",
+                    supportingQuote: "私人生活安宁",
+                  }),
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        );
+      },
+    });
+    const result = await judge({
+      claim: {
+        id: "c-ok",
+        text: "隐私包括私人生活安宁",
+        sourceId: "cc-1032",
+        quote: "私人生活安宁",
+      },
+      source: {
+        sourceId: "cc-1032",
+        body: "隐私是自然人的私人生活安宁。",
+        active: true,
+        contentHash: `0x${"ab".repeat(32)}`,
+      },
+      method: "ours",
+    });
+    expect(calls).toBe(2);
+    expect(result.verdict).toBe("SUPPORTED");
   });
 });

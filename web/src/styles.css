@@ -124,11 +124,47 @@ button {
 }
 
 .card.paid {
-  border-color: #1f6b45;
+  border: 1px solid #1f6b45;
 }
 
-.card.flagged {
-  border-color: #9c2f2f;
+.card.flagged,
+.card.skipped {
+  border: 3px solid #9c2f2f;
+  background: #fff6f4;
+}
+
+.status {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 15px;
+  padding: 8px 10px;
+  background: #fffdf8;
+  border: 1px solid #e4dccf;
+}
+
+.fineprint {
+  color: #8a8378;
+  font-size: 13px;
+}
+
+.delta {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 8px 0;
+}
+
+.eval tr.edge {
+  background: #fff3c4;
+  font-weight: 700;
+}
+
+details.backup {
+  margin-top: 12px;
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+.receipts a {
+  margin-left: 10px;
 }
 
 .badge {

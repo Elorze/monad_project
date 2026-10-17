@@ -14,6 +14,11 @@ export function parseJudgement(content: string): z.infer<typeof JudgementSchema>
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/u);
   const jsonText = fenced?.[1]?.trim() ?? trimmed;
   const parsed: unknown = JSON.parse(jsonText);
+  if (parsed && typeof parsed === "object") {
+    const record = parsed as { rationale?: unknown; supportingQuote?: unknown };
+    if (typeof record.rationale === "string") record.rationale = record.rationale.slice(0, 400);
+    if (typeof record.supportingQuote === "string") record.supportingQuote = record.supportingQuote.slice(0, 500);
+  }
   return JudgementSchema.parse(parsed);
 }
 
@@ -35,23 +40,32 @@ export function createModelJudge(options: {
   const fetchImpl = options.fetchImpl ?? fetch;
   return async ({ claim, source, method }) => {
     const prompt = renderPrompt(method, claim.text, claim.quote, source);
-    const response = await fetchImpl(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${options.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: options.model,
-        temperature: 0,
-        max_tokens: 400,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-    if (!response.ok) throw new Error(`模型请求失败：${response.status}`);
-    const payload: unknown = await response.json();
-    const content = readContent(payload);
-    return parseJudgement(content);
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await fetchImpl(endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${options.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: options.model,
+            temperature: 0,
+            max_tokens: 800,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        if (!response.ok) throw new Error(`模型请求失败：${response.status}`);
+        const payload: unknown = await response.json();
+        const content = readContent(payload);
+        return parseJudgement(content);
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) await Bun.sleep(600);
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("判定模型失败");
   };
 }
 
