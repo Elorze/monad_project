@@ -11,6 +11,8 @@ export default defineConfig({
       "/samples": "http://127.0.0.1:8787",
       "/eval": "http://127.0.0.1:8787",
       "/health": "http://127.0.0.1:8787",
+      "/verify": "http://127.0.0.1:8787",
+      "/last-verify": "http://127.0.0.1:8787",
     },
   },
 });

@@ -1,10 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { emptyAnswer, explorerTx, reduceAnswer, takeSseEvents, usdc, verdictLabel, type AnswerState, type ClaimView } from "./reduce.ts";
 
 type Passage = { sourceId: string; title: string; body: string; isOriginal: boolean };
 type Sample = { id: "legal" | "report"; title: string; disclaimer: string; passages: Passage[]; opinion: string };
 type EvalMethod = { name: string; mispayment: number; paid: number; wrong: number };
 type EvalSummary = { caseCount: number; methods: EvalMethod[]; omitted: string };
+type LastVerify = {
+  answerId: string;
+  answer: string;
+  sources: Array<{ sourceId: string; title: string; body: string }>;
+  spent: string;
+  refund: string;
+  refundTx?: string;
+  claims: ClaimView[];
+  savedAt: string;
+  via: "mcp";
+};
 
 export function App() {
   const [samples, setSamples] = useState<Record<string, Sample>>({});
@@ -13,6 +24,9 @@ export function App() {
   const [state, setState] = useState<AnswerState>(emptyAnswer());
   const [busy, setBusy] = useState(false);
   const [evalSummary, setEvalSummary] = useState<EvalSummary | null>(null);
+  const [mcpPassages, setMcpPassages] = useState<Passage[] | null>(null);
+  const [mcpNote, setMcpNote] = useState("");
+  const seenMcp = useRef("");
 
   useEffect(() => {
     void fetch("/samples")
@@ -25,11 +39,38 @@ export function App() {
       .catch(() => setEvalSummary(null));
   }, []);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void fetch("/last-verify")
+        .then(async (response) => {
+          if (!response.ok) return;
+          const body = (await response.json()) as LastVerify;
+          if (!body.answerId || body.answerId === seenMcp.current) return;
+          seenMcp.current = body.answerId;
+          setMcpPassages(body.sources.map((source) => ({ ...source, isOriginal: true })));
+          setMcpNote(`MCP verify_and_settle 刚写入 · ${body.savedAt}`);
+          setState({
+            answer: body.answer,
+            claims: body.claims,
+            spent: body.spent,
+            refund: body.refund,
+            refundTx: body.refundTx,
+            error: "",
+          });
+        })
+        .catch(() => undefined);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const sample = samples[sampleId];
+  const passages = mcpPassages ?? sample?.passages ?? [];
 
   async function verify() {
     setBusy(true);
     setState(emptyAnswer());
+    setMcpPassages(null);
+    setMcpNote("");
     try {
       const response = await fetch("/answer", {
         method: "POST",
@@ -86,14 +127,15 @@ export function App() {
           </button>
         </div>
         <p className="script">
-          台词：先说斯坦福的六分之一；再看智谱刚写的隐私意见，赔偿那句原文里没有，所以不付；最后亮下面的评测表，误付率从 64% 到 9%。
+          台词：先说斯坦福的六分之一；再让 Cursor Agent 调用 verify_and_settle；网页同步出现同一结果；最后亮评测表，误付率从 64% 到 9%。
         </p>
+        {mcpNote ? <p className="disclaimer">{mcpNote}</p> : null}
       </header>
-      {sample?.disclaimer ? <p className="disclaimer">{sample.disclaimer}</p> : null}
+      {!mcpNote && sample?.disclaimer ? <p className="disclaimer">{sample.disclaimer}</p> : null}
       <section className="layout">
         <section>
           <h2>源文</h2>
-          {(sample?.passages ?? []).map((passage) => (
+          {passages.map((passage) => (
             <article key={passage.sourceId} className="passage">
               <p className="meta">
                 {passage.title} · {passage.isOriginal ? "原创" : "转载"}
@@ -105,7 +147,7 @@ export function App() {
         <section>
           <h2>Agent 意见</h2>
           {state.error ? <p className="error">{state.error}</p> : null}
-          <p className="answer">{state.answer || sample?.opinion || "选择样例后点核对。"}</p>
+          <p className="answer">{state.answer || sample?.opinion || "选择样例后点核对，或等 MCP 写入。"}</p>
         </section>
         <section>
           <h2>判定和结算</h2>

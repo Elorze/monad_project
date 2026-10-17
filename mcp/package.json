@@ -1,0 +1,16 @@
+{
+  "name": "citeaudit-mcp",
+  "module": "server.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

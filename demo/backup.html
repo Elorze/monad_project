@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>CiteAudit 备用演示</title>
+    <style>
+      body {
+        margin: 0;
+        background: #111;
+        color: #f3efe6;
+        font-family: "Segoe UI", sans-serif;
+      }
+      img {
+        width: 100vw;
+        height: 85vh;
+        object-fit: contain;
+        background: #1c1915;
+      }
+      p {
+        margin: 12px 24px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="frame" alt="demo scene" />
+    <p id="caption"></p>
+    <script>
+      const scenes = [
+        { src: "scene-sources.jpg", ms: 24000, text: "斯坦福数字 → 民法典原文与 Agent 意见" },
+        { src: "scene-verdict.jpg", ms: 45000, text: "verify_and_settle → 支持才付，未支持不付" },
+        { src: "scene-eval.jpg", ms: 35000, text: "评测表：误付率 64.3% → 9.1%" },
+      ];
+      let i = 0;
+      const img = document.getElementById("frame");
+      const caption = document.getElementById("caption");
+      function show() {
+        const scene = scenes[i % scenes.length];
+        img.src = scene.src;
+        caption.textContent = scene.text;
+        setTimeout(() => {
+          i += 1;
+          show();
+        }, scene.ms);
+      }
+      show();
+    </script>
+  </body>
+</html>

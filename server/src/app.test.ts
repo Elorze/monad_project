@@ -115,6 +115,42 @@ describe("回答接口", () => {
     expect(events.at(-1)).toMatchObject({ spent: "1000" });
   });
 
+  test("POST /verify 会结算并留下 last-verify 给网页同步", async () => {
+    const app = createApp();
+    const response = await app.request("/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        answer: "隐私包括私人生活安宁。",
+        budget: "5000",
+        method: "baselineA",
+        sources: [
+          {
+            sourceId: "cc-1032",
+            title: "民法典第1032条",
+            body: "隐私是自然人的私人生活安宁和不愿为他人知晓的私密空间、私密活动、私密信息。",
+          },
+        ],
+        claims: [
+          {
+            id: "ok-peace",
+            text: "隐私包括私人生活安宁。",
+            sourceId: "cc-1032",
+            quote: "私人生活安宁和不愿为他人知晓的私密空间、私密活动、私密信息",
+          },
+        ],
+      }),
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { via: string; claims: Array<{ paid: boolean }>; answerId: string };
+    expect(body.via).toBe("mcp");
+    expect(body.claims[0]?.paid).toBe(true);
+    const last = await app.request("/last-verify");
+    expect(last.status).toBe(200);
+    const saved = (await last.json()) as { answerId: string };
+    expect(saved.answerId).toBe(body.answerId);
+  });
+
   test("评测表用实跑的误付率，不预填模型那一列", async () => {
     const app = createApp();
     const response = await app.request("/eval");

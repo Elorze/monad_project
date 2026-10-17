@@ -10,3 +10,4 @@ broadcast/
 demo/audio/
 demo/*.webm
 eval/capture-raw.txt
+eval/last-verify.json

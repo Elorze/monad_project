@@ -8,12 +8,41 @@ import { buildEvalSummary } from "./evalSet.ts";
 import { PROMPT_VERSION } from "./judge.ts";
 import { LEGAL_DISCLAIMER, LEGAL_OPINION, legalClaims, legalJudge, legalPrices, legalSourceMap, loadLegalPassages } from "./legalDemo.ts";
 import { loadSources, priceMap, toSourceMap } from "./sources/registry.ts";
-import { verifyClaims, type VerifyResult } from "./verify.ts";
+import { applyBudget } from "./budget.ts";
+import { readLastVerify, runVerifyAndSettle } from "./verifyRequest.ts";
+import { verifyClaims } from "./verify.ts";
+
+export { applyBudget } from "./budget.ts";
 
 const AnswerRequest = z.object({
   question: z.string().min(2).max(500).optional(),
   sample: z.enum(["legal", "report"]).optional(),
   budget: z.string().regex(/^\d+$/u),
+});
+
+const VerifyRequest = z.object({
+  sources: z
+    .array(
+      z.object({
+        sourceId: z.string().min(1),
+        title: z.string().optional(),
+        body: z.string().min(1),
+      }),
+    )
+    .min(1),
+  answer: z.string().min(1),
+  claims: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        text: z.string().min(1),
+        sourceId: z.string().min(1),
+        quote: z.string().min(1),
+      }),
+    )
+    .min(1),
+  budget: z.string().regex(/^\d+$/u).optional(),
+  method: z.enum(["baselineA", "baselineB", "ours"]).optional(),
 });
 
 const SseEvent = z.discriminatedUnion("type", [
@@ -46,31 +75,6 @@ const SseEvent = z.discriminatedUnion("type", [
 
 export type AnswerEvent = z.infer<typeof SseEvent>;
 
-export function applyBudget(results: VerifyResult[], budget: string): {
-  results: VerifyResult[];
-  spent: string;
-  refund: string;
-} {
-  let remaining = BigInt(budget);
-  let spent = 0n;
-  const next = results.map((result) => {
-    if (result.action !== "PAID" || result.amount === undefined) return result;
-    const amount = BigInt(result.amount);
-    if (remaining < amount) {
-      return {
-        ...result,
-        action: "SKIPPED" as const,
-        amount: undefined,
-        rationale: "预算不足，未付款",
-      };
-    }
-    remaining -= amount;
-    spent += amount;
-    return result;
-  });
-  return { results: next, spent: spent.toString(), refund: remaining.toString() };
-}
-
 export function createApp(): Hono {
   const app = new Hono();
 
@@ -92,6 +96,24 @@ export function createApp(): Hono {
   });
 
   app.get("/eval", async (c) => c.json(await buildEvalSummary()));
+
+  app.get("/last-verify", (c) => {
+    const last = readLastVerify();
+    if (!last) return c.json({ message: "还没有 MCP 核对结果" }, 404);
+    return c.json(last);
+  });
+
+  app.post("/verify", async (c) => {
+    const parsed = VerifyRequest.safeParse(await c.req.json());
+    if (!parsed.success) return c.json({ message: "sources、answer、claims 格式不对" }, 400);
+    try {
+      const result = await runVerifyAndSettle(parsed.data);
+      return c.json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "核对失败";
+      return c.json({ message }, 400);
+    }
+  });
 
   app.get("/samples", async (c) => {
     const sources = await loadSources();
